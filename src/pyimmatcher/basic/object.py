@@ -1,4 +1,4 @@
-from typing import Sized
+from typing import Sized, _Final as Final
 
 from pyimmatcher.api.assertions import *
 from pyimmatcher.api.helpers import *
@@ -62,11 +62,11 @@ def is_not(other: Type[T]) -> Assertion[T]:
 
 
 class IsEqualTo(Assertion[T]):
-    def __init__(self, other: Type[T]):
+    def __init__(self, other: T):
         self.other = other
         self.result = Result('is equal to {}', other)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if actual == self.other:
             return self.result.simple_pass()
         else:
@@ -77,11 +77,11 @@ class IsEqualTo(Assertion[T]):
 
 
 class IsNotEqualTo(Assertion[T]):
-    def __init__(self, other: Type[T]):
+    def __init__(self, other: T):
         self.other = other
         self.result = Result('is not equal to {}', other)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if actual != self.other:
             return self.result.pass_('is {}', actual)
         else:
@@ -124,11 +124,17 @@ class HasProperty(Assertion[T]):
         self.prop_name = prop_name
         self.result = Result('has property "{}"', prop_name)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if hasattr(actual, self.prop_name):
             return self.result.simple_pass()
         else:
             return self.result.fail('does not have property "{}"', self.prop_name)
+
+    def with_value(self, prop_val):
+        return HasPropertyWithValue(self.prop_name, prop_val)
+
+    def with_value_other_than(self, prop_val):
+        return HasPropertyWithValueOtherThan(self.prop_name, prop_val)
 
     def __not__(self):
         return DoesNotHaveProperty(self.prop_name)
@@ -139,7 +145,7 @@ class DoesNotHaveProperty(Assertion[T]):
         self.prop_name = prop_name
         self.result = Result('does not have property "{}"', prop_name)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if not hasattr(actual, self.prop_name):
             return self.result.simple_pass()
         else:
@@ -154,7 +160,7 @@ class HasPropertyWithValue(Assertion[T]):
             'has property "{prop}" with value, {val}',
             prop=prop_name, val=prop_value)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if hasattr(actual, self.prop_name):
             return self._test_property_value(actual)
         else:
@@ -178,7 +184,7 @@ class HasPropertyWithValueOtherThan(Assertion[T]):
             'has property "{prop}" with value other than {val}',
             prop=prop_name, val=prop_value)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if hasattr(actual, self.prop_name):
             return self.test_value(getattr(actual, self.prop_name))
         else:
@@ -195,6 +201,24 @@ class HasPropertyWithValueOtherThan(Assertion[T]):
                 prop=self.prop_name, val=actual_value)
 
 
+class HasMethod(Assertion[T]):
+    def __init__(self, method_name: str):
+        self.method_name: Final = method_name
+        self.result: Final = ResultBuilder('has a method named "{}"', method_name)
+
+    def test(self, actual: T) -> TestResult:
+        if hasattr(actual, self.method_name):
+            return self.test_is_method(getattr(actual, self.method_name))
+        else:
+            return self.result.fail('does not have method "{}"', self.method_name)
+
+    def test_is_method(self, prop):
+        if callable(prop):
+            return self.result.simple_pass()
+        else:
+            return self.result.fail('has property "{}", which is not a method')
+
+
 class HasString(Assertion[T]):
     message = 'has string form of "{}"'
 
@@ -202,7 +226,7 @@ class HasString(Assertion[T]):
         self.string = string
         self.result = Result(self.message, string)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         actual_string = str(actual)
         if actual_string == self.string:
             return self.result.simple_pass()
@@ -218,7 +242,7 @@ class DoesNotHaveString(Assertion[T]):
         self.string = string
         self.result = Result('does not have string form of "{}"', string)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         actual_string = str(actual)
         if actual_string != self.string:
             return self.result.pass_('has string form of "{}"', actual_string)
@@ -233,7 +257,7 @@ class IsInstanceOf(Assertion[T]):
         self.clazz = clazz
         self.result = Result(self.message, clazz.__qualname__)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if isinstance(actual, self.clazz):
             return self.result.simple_pass()
         else:
@@ -248,7 +272,7 @@ class IsNotInstanceOf(Assertion[T]):
         self.clazz = clazz
         self.result = Result('is not instance of {}', clazz.__qualname__)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if isinstance(actual, self.clazz):
             return self.test_specifics(actual)
         else:
@@ -267,11 +291,11 @@ class IsNotInstanceOf(Assertion[T]):
 class Is(Assertion[T]):
     message = 'is {}'
 
-    def __init__(self, other: Type[T]):
+    def __init__(self, other: T):
         self.other = other
         self.result = Result(self.message, other)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if actual is self.other:
             return self.result.simple_pass()
         else:
@@ -282,11 +306,11 @@ class Is(Assertion[T]):
 
 
 class IsNot(Assertion[T]):
-    def __init__(self, other: Type[T]):
+    def __init__(self, other: T):
         self.other = other
         self.result = Result("is not {}", other)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if actual is not self.other:
             return self.result.pass_("is {}", actual)
         else:

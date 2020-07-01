@@ -3,7 +3,7 @@ from pyimmatcher.api.helpers import ResultBuilder as Result
 from pyimmatcher.api.assertions import T, Assertion
 
 from numbers import Real as Number
-from typing import Type, _Final
+from typing import _Final as Final
 from math import fabs
 
 
@@ -34,8 +34,8 @@ def is_not_close_to(other: float, delta: float) -> Assertion[float]:
 
 class IsMultipleOf(Assertion[Number]):
     def __init__(self, base: Number):
-        self.base: _Final = base
-        self.result: _Final = Result('is a multiple of {}', base)
+        self.base: Final = base
+        self.result: Final = Result('is a multiple of {}', base)
 
     def test(self, actual: Number) -> TestResult:
         if (actual % self.base) == 0:
@@ -49,8 +49,8 @@ class IsMultipleOf(Assertion[Number]):
 
 class IsNotMultipleOf(Assertion[Number]):
     def __init__(self, base: Number):
-        self.base: _Final = base
-        self.result: _Final = Result('is not a multiple of {}', base)
+        self.base: Final = base
+        self.result: Final = Result('is not a multiple of {}', base)
 
     def test(self, actual: Number) -> TestResult:
         if (actual % self.base) != 0:
@@ -60,11 +60,11 @@ class IsNotMultipleOf(Assertion[Number]):
 
 
 class IsLessThan(Assertion[T]):
-    def __init__(self, other: Type[T]):
-        self.other: _Final = other
-        self.result: _Final = Result('is less than {}', other)
+    def __init__(self, other: T):
+        self.other: Final = other
+        self.result: Final = Result('is less than {}', other)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if actual < self.other:
             return self.result.pass_('is {} which is less', actual)
         else:
@@ -72,11 +72,11 @@ class IsLessThan(Assertion[T]):
 
 
 class IsLessThanOrEqualTo(Assertion[T]):
-    def __init__(self, other: Type[T]):
-        self.other: _Final = other
-        self.result: _Final = Result('is less than or equal to {}', other)
+    def __init__(self, other: T):
+        self.other: Final = other
+        self.result: Final = Result('is less than or equal to {}', other)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if actual <= self.other:
             return self.result.pass_('is {}, which is less or equal', actual)
         else:
@@ -84,11 +84,11 @@ class IsLessThanOrEqualTo(Assertion[T]):
 
 
 class IsGreaterThan(Assertion[T]):
-    def __init__(self, other: Type[T]):
-        self.other: _Final = other
-        self.result: _Final = Result('is greater than {}', other)
+    def __init__(self, other: T):
+        self.other: Final = other
+        self.result: Final = Result('is greater than {}', other)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if actual > self.other:
             return self.result.pass_('is {}, which is greater', actual)
         else:
@@ -96,11 +96,11 @@ class IsGreaterThan(Assertion[T]):
 
 
 class IsGreaterThanOrEqualTo(Assertion[T]):
-    def __init__(self, other: Type[T]):
-        self.other: _Final = other
-        self.result: _Final = Result('is greater than or equal to {}', other)
+    def __init__(self, other: T):
+        self.other: Final = other
+        self.result: Final = Result('is greater than or equal to {}', other)
 
-    def test(self, actual: Type[T]) -> TestResult:
+    def test(self, actual: T) -> TestResult:
         if actual >= self.other:
             return self.result.pass_('is {}, which is greater or equal', actual)
         else:
@@ -109,9 +109,9 @@ class IsGreaterThanOrEqualTo(Assertion[T]):
 
 class IsCloseTo(Assertion[float]):
     def __init__(self, other: float, delta: float=0.00000001):
-        self.other: _Final = other
-        self.delta: _Final = delta
-        self.result: _Final = Result('is within {delta} of {num}', delta=delta, num=other)
+        self.other: Final = other
+        self.delta: Final = delta
+        self.result: Final = Result('is within {delta} of {num}', delta=delta, num=other)
 
     def test(self, actual: float) -> TestResult:
         if fabs(actual - self.other) <= self.delta:
@@ -125,9 +125,9 @@ class IsCloseTo(Assertion[float]):
 
 class IsNotCloseTo(Assertion[float]):
     def __init__(self, other: float, delta: float=0.00000001):
-        self.other: _Final = other
-        self.delta: _Final = delta
-        self.result: _Final = Result('is not within {delta} of {num}', delta=delta, num=other)
+        self.other: Final = other
+        self.delta: Final = delta
+        self.result: Final = Result('is not within {delta} of {num}', delta=delta, num=other)
 
     def test(self, actual: float) -> TestResult:
         if fabs(actual - self.other) > self.delta:
