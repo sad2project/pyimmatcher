@@ -7,31 +7,6 @@ from typing import _Final as Final
 from math import fabs
 
 
-def is_multiple_of(base: Number) -> Assertion[Number]:
-    return IsMultipleOf(base)
-
-def is_not_multiple_of(base: Number) -> Assertion[Number]:
-    return IsNotMultipleOf(base)
-
-def is_less_than(other: Type[T]) -> Assertion[T]:
-    return IsLessThan(other)
-
-def is_less_than_or_equal_to(other: Type[T]) -> Assertion[T]:
-    return IsLessThanOrEqualTo(other)
-
-def is_greater_than(other: Type[T]) -> Assertion[T]:
-    return IsGreaterThan(other)
-
-def is_greater_than_or_equal_to(other: Type[T]) -> Assertion[T]:
-    return IsGreaterThanOrEqualTo(other)
-
-def is_close_to(other: float, delta: float) -> Assertion[float]:
-    return IsCloseTo(other, delta)
-
-def is_not_close_to(other: float, delta: float) -> Assertion[float]:
-    return IsNotCloseTo(other, delta)
-
-
 class IsMultipleOf(Assertion[Number]):
     def __init__(self, base: Number):
         self.base: Final = base
@@ -134,3 +109,28 @@ class IsNotCloseTo(Assertion[float]):
             return self.result.pass_('is {}, outside of range', actual)
         else:
             return self.result.fail('is {}, within range', actual)
+
+
+def is_multiple_of(base: Number) -> Assertion[Number]:
+    return IsMultipleOf(base)
+
+def is_not_multiple_of(base: Number) -> Assertion[Number]:
+    return IsNotMultipleOf(base)
+
+def is_less_than(other: T) -> Assertion[T]:
+    return IsLessThan(other)
+
+def is_less_than_or_equal_to(other: T) -> Assertion[T]:
+    return IsLessThanOrEqualTo(other)
+
+def is_greater_than(other: T) -> Assertion[T]:
+    return IsGreaterThan(other)
+
+def is_greater_than_or_equal_to(other: T) -> Assertion[T]:
+    return IsGreaterThanOrEqualTo(other)
+
+def is_close_to(other: float, delta: float) -> Assertion[float]:
+    return IsCloseTo(other, delta)
+
+def is_not_close_to(other: float, delta: float) -> Assertion[float]:
+    return IsNotCloseTo(other, delta)

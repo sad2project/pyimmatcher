@@ -5,62 +5,6 @@ from pyimmatcher.api.helpers import *
 Result = ResultBuilder
 
 
-def is_equal_to(other: Type[T]) -> Assertion[T]:
-    return IsEqualTo(other)
-
-
-def is_not_equal_to(other: Type[T]) -> Assertion[T]:
-    return IsNotEqualTo(other)
-
-
-def has_length(length: int) -> Assertion[T]:
-    return HasLength(length)
-
-
-def does_not_have_length(length: int) -> Assertion[T]:
-    return DoesNotHaveLength(length)
-
-
-def has_property(prop_name: str) -> Assertion[T]:
-    return HasProperty(prop_name)
-
-
-def does_not_have_property(prop_name: str) -> Assertion[T]:
-    return DoesNotHaveProperty(prop_name)
-
-
-def has_property_with_value(prop_name: str, prop_val) -> Assertion[T]:
-    return HasPropertyWithValue(prop_name, prop_val)
-
-
-def has_property_with_value_other_than(prop_name: str, prop_val) -> Assertion[T]:
-    return HasPropertyWithValueOtherThan(prop_name, prop_val)
-
-
-def has_string(string: str) -> Assertion[T]:
-    return HasString(string)
-
-
-def does_not_have_string(string: str) -> Assertion[T]:
-    return DoesNotHaveString(string)
-
-
-def is_instance_of(clazz: type) -> Assertion[T]:
-    return IsInstanceOf(clazz)
-
-
-def is_not_instance_of(clazz: type) -> Assertion[T]:
-    return IsNotInstanceOf(clazz)
-
-
-def is_(other: Type[T]) -> Assertion[T]:
-    return Is(other)
-
-
-def is_not(other: Type[T]) -> Assertion[T]:
-    return IsNot(other)
-
-
 class IsEqualTo(Assertion[T]):
     def __init__(self, other: T):
         self.other = other
@@ -245,9 +189,40 @@ class DoesNotHaveString(Assertion[T]):
     def test(self, actual: T) -> TestResult:
         actual_string = str(actual)
         if actual_string != self.string:
-            return self.result.pass_('has string form of "{}"', actual_string)
+            return self.result.pass_(HasString.message, actual_string)
         else:
-            return self.result.fail('has string form of "{}"', actual_string)
+            return self.result.fail(HasString.message, actual_string)
+
+
+class HasRepr(Assertion[T]):
+    message = 'has repr form of "{}"'
+
+    def __init__(self, string: str):
+        self.string: Final = string
+        self.result: Final = Result(self.message, string)
+
+    def test(self, actual: T) -> TestResult:
+        actual_repr = repr(actual)
+        if actual_repr == self.string:
+            return self.result.simple_pass()
+        else:
+            return self.result.fail(self.message, actual_repr)
+
+    def __not__(self):
+        return DoesNotHaveRepr(self.string)
+
+
+class DoesNotHaveRepr(Assertion[T]):
+    def __init__(self, string: str):
+        self.string: Final = string
+        self.result: Final = Result('does not have repr form of "{}"', string)
+
+    def test(self, actual: T) -> TestResult:
+        actual_repr = repr(actual)
+        if actual_repr != self.string:
+            return self.result.pass_(HasRepr.message, actual_repr)
+        else:
+            return self.result.fail(HasRepr.message, actual_repr)
 
 
 class IsInstanceOf(Assertion[T]):
@@ -333,3 +308,74 @@ def is_not_None(actual):
         return result.pass_('is {}', actual)
     else:
         return result.fail('is None')
+
+
+def is_equal_to(other: T) -> Assertion[T]:
+    return IsEqualTo(other)
+
+def equals(other: T) -> Assertion[T]:
+    return IsEqualTo(other)
+
+
+def is_not_equal_to(other: T) -> Assertion[T]:
+    return IsNotEqualTo(other)
+
+
+def has_length(length: int) -> Assertion[T]:
+    return HasLength(length)
+
+
+def does_not_have_length(length: int) -> Assertion[T]:
+    return DoesNotHaveLength(length)
+
+
+def has_property(prop_name: str) -> HasProperty[T]:
+    return HasProperty(prop_name)
+
+
+def does_not_have_property(prop_name: str) -> Assertion[T]:
+    return DoesNotHaveProperty(prop_name)
+
+
+def has_property_with_value(prop_name: str, prop_val) -> Assertion[T]:
+    return HasPropertyWithValue(prop_name, prop_val)
+
+
+def has_property_with_value_other_than(prop_name: str, prop_val) -> Assertion[T]:
+    return HasPropertyWithValueOtherThan(prop_name, prop_val)
+
+
+def has_method(method_name: str):
+    return HasMethod(method_name)
+
+
+def has_string(string: str) -> Assertion[T]:
+    return HasString(string)
+
+
+def does_not_have_string(string: str) -> Assertion[T]:
+    return DoesNotHaveString(string)
+
+
+def has_repr(string: str) -> Assertion[T]:
+    return HasRepr(string)
+
+
+def does_not_have_repr(string: str) -> Assertion[T]:
+    return DoesNotHaveRepr(string)
+
+
+def is_instance_of(clazz: type) -> Assertion[T]:
+    return IsInstanceOf(clazz)
+
+
+def is_not_instance_of(clazz: type) -> Assertion[T]:
+    return IsNotInstanceOf(clazz)
+
+
+def is_(other: T) -> Assertion[T]:
+    return Is(other)
+
+
+def is_not(other: T) -> Assertion[T]:
+    return IsNot(other)
