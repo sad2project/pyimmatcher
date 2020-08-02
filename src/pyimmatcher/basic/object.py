@@ -5,7 +5,7 @@ from pyimmatcher.api.helpers import *
 Result = ResultBuilder
 
 
-class IsEqualTo(Assertion[T]):
+class IsEqualTo(NegatableAssertion[T]):
     def __init__(self, other: T):
         self.other = other
         self.result = Result('is equal to {}', other)
@@ -20,7 +20,7 @@ class IsEqualTo(Assertion[T]):
         return IsNotEqualTo(self.other)
 
 
-class IsNotEqualTo(Assertion[T]):
+class IsNotEqualTo(NegatableAssertion[T]):
     def __init__(self, other: T):
         self.other = other
         self.result = Result('is not equal to {}', other)
@@ -32,7 +32,7 @@ class IsNotEqualTo(Assertion[T]):
             return self.result.fail('is equal to {}', self.other)
 
 
-class HasLength(Assertion[Sized]):
+class HasLength(NegatableAssertion[Sized]):
     message = 'has length of {}'
 
     def __init__(self, length: int):
@@ -50,7 +50,7 @@ class HasLength(Assertion[Sized]):
         return DoesNotHaveLength(self.length)
 
 
-class DoesNotHaveLength(Assertion[Sized]):
+class DoesNotHaveLength(NegatableAssertion[Sized]):
     def __init__(self, length: int):
         self.length = length
         self.result = Result('does not have length of {}', length)
@@ -63,7 +63,7 @@ class DoesNotHaveLength(Assertion[Sized]):
             return self.result.fail('has length of {}', actual_length)
 
 
-class HasProperty(Assertion[T]):
+class HasProperty(NegatableAssertion[T]):
     def __init__(self, prop_name: str):
         self.prop_name = prop_name
         self.result = Result('has property "{}"', prop_name)
@@ -84,7 +84,7 @@ class HasProperty(Assertion[T]):
         return DoesNotHaveProperty(self.prop_name)
 
 
-class DoesNotHaveProperty(Assertion[T]):
+class DoesNotHaveProperty(NegatableAssertion[T]):
     def __init__(self, prop_name: str):
         self.prop_name = prop_name
         self.result = Result('does not have property "{}"', prop_name)
@@ -96,7 +96,7 @@ class DoesNotHaveProperty(Assertion[T]):
             return self.result.fail('has property "{}"', self.prop_name)
 
 
-class HasPropertyWithValue(Assertion[T]):
+class HasPropertyWithValue(NegatableAssertion[T]):
     def __init__(self, prop_name: str, prop_value):
         self.prop_name = prop_name
         self.prop_value = prop_value
@@ -120,7 +120,7 @@ class HasPropertyWithValue(Assertion[T]):
                 prop=self.prop_name, val=getattr(actual, self.prop_name))
 
 
-class HasPropertyWithValueOtherThan(Assertion[T]):
+class HasPropertyWithValueOtherThan(NegatableAssertion[T]):
     def __init__(self, prop_name: str, prop_value):
         self.prop_name = prop_name
         self.prop_value = prop_value
@@ -145,7 +145,7 @@ class HasPropertyWithValueOtherThan(Assertion[T]):
                 prop=self.prop_name, val=actual_value)
 
 
-class HasMethod(Assertion[T]):
+class HasMethod(NegatableAssertion[T]):
     def __init__(self, method_name: str):
         self.method_name: Final = method_name
         self.result: Final = ResultBuilder('has a method named "{}"', method_name)
@@ -163,7 +163,7 @@ class HasMethod(Assertion[T]):
             return self.result.fail('has property "{}", which is not a method')
 
 
-class HasString(Assertion[T]):
+class HasString(NegatableAssertion[T]):
     message = 'has string form of "{}"'
 
     def __init__(self, string: str):
@@ -181,7 +181,7 @@ class HasString(Assertion[T]):
         return DoesNotHaveString(self.string)
 
 
-class DoesNotHaveString(Assertion[T]):
+class DoesNotHaveString(NegatableAssertion[T]):
     def __init__(self, string: str):
         self.string = string
         self.result = Result('does not have string form of "{}"', string)
@@ -194,7 +194,7 @@ class DoesNotHaveString(Assertion[T]):
             return self.result.fail(HasString.message, actual_string)
 
 
-class HasRepr(Assertion[T]):
+class HasRepr(NegatableAssertion[T]):
     message = 'has repr form of "{}"'
 
     def __init__(self, string: str):
@@ -212,7 +212,7 @@ class HasRepr(Assertion[T]):
         return DoesNotHaveRepr(self.string)
 
 
-class DoesNotHaveRepr(Assertion[T]):
+class DoesNotHaveRepr(NegatableAssertion[T]):
     def __init__(self, string: str):
         self.string: Final = string
         self.result: Final = Result('does not have repr form of "{}"', string)
@@ -225,7 +225,7 @@ class DoesNotHaveRepr(Assertion[T]):
             return self.result.fail(HasRepr.message, actual_repr)
 
 
-class IsInstanceOf(Assertion[T]):
+class IsInstanceOf(NegatableAssertion[T]):
     message = 'is instance of {}'
 
     def __init__(self, clazz: type):
@@ -242,7 +242,7 @@ class IsInstanceOf(Assertion[T]):
         return IsNotInstanceOf(self.clazz)
 
 
-class IsNotInstanceOf(Assertion[T]):
+class IsNotInstanceOf(NegatableAssertion[T]):
     def __init__(self, clazz: type):
         self.clazz = clazz
         self.result = Result('is not instance of {}', clazz.__qualname__)
@@ -263,7 +263,7 @@ class IsNotInstanceOf(Assertion[T]):
                 sub=actual_type.__qualname__, type=self.clazz.__qualname__)
 
 
-class Is(Assertion[T]):
+class Is(NegatableAssertion[T]):
     message = 'is {}'
 
     def __init__(self, other: T):
@@ -280,7 +280,7 @@ class Is(Assertion[T]):
         return IsNot(self.other)
 
 
-class IsNot(Assertion[T]):
+class IsNot(NegatableAssertion[T]):
     def __init__(self, other: T):
         self.other = other
         self.result = Result("is not {}", other)
@@ -310,22 +310,22 @@ def is_not_None(actual):
         return result.fail('is None')
 
 
-def is_equal_to(other: T) -> Assertion[T]:
+def is_equal_to(other: T) -> NegatableAssertion[T]:
     return IsEqualTo(other)
 
-def equals(other: T) -> Assertion[T]:
+def equals(other: T) -> NegatableAssertion[T]:
     return IsEqualTo(other)
 
 
-def is_not_equal_to(other: T) -> Assertion[T]:
+def is_not_equal_to(other: T) -> NegatableAssertion[T]:
     return IsNotEqualTo(other)
 
 
-def has_length(length: int) -> Assertion[T]:
+def has_length(length: int) -> NegatableAssertion[T]:
     return HasLength(length)
 
 
-def does_not_have_length(length: int) -> Assertion[T]:
+def does_not_have_length(length: int) -> NegatableAssertion[T]:
     return DoesNotHaveLength(length)
 
 
@@ -333,15 +333,15 @@ def has_property(prop_name: str) -> HasProperty[T]:
     return HasProperty(prop_name)
 
 
-def does_not_have_property(prop_name: str) -> Assertion[T]:
+def does_not_have_property(prop_name: str) -> NegatableAssertion[T]:
     return DoesNotHaveProperty(prop_name)
 
 
-def has_property_with_value(prop_name: str, prop_val) -> Assertion[T]:
+def has_property_with_value(prop_name: str, prop_val) -> NegatableAssertion[T]:
     return HasPropertyWithValue(prop_name, prop_val)
 
 
-def has_property_with_value_other_than(prop_name: str, prop_val) -> Assertion[T]:
+def has_property_with_value_other_than(prop_name: str, prop_val) -> NegatableAssertion[T]:
     return HasPropertyWithValueOtherThan(prop_name, prop_val)
 
 
@@ -349,33 +349,33 @@ def has_method(method_name: str):
     return HasMethod(method_name)
 
 
-def has_string(string: str) -> Assertion[T]:
+def has_string(string: str) -> NegatableAssertion[T]:
     return HasString(string)
 
 
-def does_not_have_string(string: str) -> Assertion[T]:
+def does_not_have_string(string: str) -> NegatableAssertion[T]:
     return DoesNotHaveString(string)
 
 
-def has_repr(string: str) -> Assertion[T]:
+def has_repr(string: str) -> NegatableAssertion[T]:
     return HasRepr(string)
 
 
-def does_not_have_repr(string: str) -> Assertion[T]:
+def does_not_have_repr(string: str) -> NegatableAssertion[T]:
     return DoesNotHaveRepr(string)
 
 
-def is_instance_of(clazz: type) -> Assertion[T]:
+def is_instance_of(clazz: type) -> NegatableAssertion[T]:
     return IsInstanceOf(clazz)
 
 
-def is_not_instance_of(clazz: type) -> Assertion[T]:
+def is_not_instance_of(clazz: type) -> NegatableAssertion[T]:
     return IsNotInstanceOf(clazz)
 
 
-def is_(other: T) -> Assertion[T]:
+def is_(other: T) -> NegatableAssertion[T]:
     return Is(other)
 
 
-def is_not(other: T) -> Assertion[T]:
+def is_not(other: T) -> NegatableAssertion[T]:
     return IsNot(other)

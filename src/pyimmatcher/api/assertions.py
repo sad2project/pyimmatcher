@@ -1,21 +1,21 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
 
-from pyimmatcher.api import (
-    TestResult, BasicResult, make_message, AllOfTestResult, AnyOfTestResult)
+from pyimmatcher.api import TestResult, AllOfTestResult, AnyOfTestResult, invert
 
 T = TypeVar('T', contravariant=True)
 
 
 class Assertion(ABC, Generic[T]):
     """
-    The main heart of this testing library, `Assertion`s are largely the same thing as
-    `Matcher`s from Hamcrest, but designed to be more pure and functional. As
-    such, they only have the one check method, and the message building
-    functionality is delegated to the `TestResult` returned from the `test()`
-    method. To learn more about the design decisions around this, see
-    `TestResult`'s documentation.
-    """
+        The main heart of this testing library, `NegatableAssertion`s are largely the same thing as
+        `Matcher`s from Hamcrest, but designed to be more pure and functional. As
+        such, they only have the one check method, and the message building
+        functionality is delegated to the `TestResult` returned from the `test()`
+        method. To learn more about the design decisions around this, see
+        `TestResult`'s documentation.
+        """
+
     @abstractmethod
     def test(self, actual: T) -> TestResult:
         """
@@ -31,6 +31,9 @@ class Assertion(ABC, Generic[T]):
 
     def __or__(self, other):
         return AnyOfAssertion(self, other)
+
+
+class NegatableAssertion(Assertion[T], ABC):
 
     def __not__(self):
         return InvertedAssertion(self)
@@ -80,6 +83,4 @@ class InvertedAssertion(Assertion[T]):
 
     def test(self, actual: T) -> TestResult:
         original_result = self.assertion.test(actual)
-        return BasicResult(original_result.failed,
-                           make_message("not {}", original_result.expected()),
-                           original_result.actual)
+        return invert(original_result)

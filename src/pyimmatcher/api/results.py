@@ -2,10 +2,13 @@ from abc import ABC
 from typing import Callable, List
 
 
+Message = Callable[[], str]
+
+
 class TestResult(ABC):
     """
     `TestResult` is a result from a test, obviously. They're created by the
-    `test()` method on `Assertion` (usually) and have serve two basic needs:
+    `test()` method on `NegatableAssertion` (usually) and have serve two basic needs:
 
     1) Let the assertion function know whether or not the test failed
     2) Provide the expected and actual messages for displaying how a test failed
@@ -18,12 +21,12 @@ class TestResult(ABC):
     mutating an argument rather than returning something.
 
     I like to lean towards purer functions and types, which allow you to reuse
-    the `Assertion` instances and make the result message code cleaner, I think.
+    the `NegatableAssertion` instances and make the result message code cleaner, I think.
 
     Something that is probably unexpected about `TestResult` is that the
     *expected* and *actual* messages are functions that return a string rather
     than just being a string in and of themselves. This is because, if the
-    `Assertion` wants to use a formatted string as part of the output, it's not
+    `NegatableAssertion` wants to use a formatted string as part of the output, it's not
     worth the effort of doing that formatting if the test doesn't fail and need
     the failure message.
 
@@ -48,14 +51,11 @@ class BasicResult(TestResult):
     """
     def __init__(self,
             passed: bool,
-            expected: Callable[[], str],
-            actual: Callable[[], str]):
+            expected: Message,
+            actual: Message):
         self.passed = passed
         self.expected = expected
         self.actual = actual
-
-
-Message = Callable[[], str]
 
 
 def _make_simple_message(string: str) -> Message:
@@ -103,7 +103,7 @@ class MultiTestResult(TestResult):
 
 class AllOfTestResult(MultiTestResult):
     """
-    Used by `Tester.all()` to collect all the `TestResult`s from its `Assertion`s and
+    Used by `Tester.all()` to collect all the `TestResult`s from its `NegatableAssertion`s and
     make them into a combined result.
 
     The 'actual' message only returns the 'actual' messages from the failed
@@ -125,7 +125,7 @@ class AllOfTestResult(MultiTestResult):
 
 class AnyOfTestResult(MultiTestResult):
     """
-    Used by `Tester.any()` to collect all the `TestResult`s from its `Assertion`s and
+    Used by `Tester.any()` to collect all the `TestResult`s from its `NegatableAssertion`s and
     make them into a combined result.
     """
     def __init__(self, results: List[TestResult]):
@@ -149,3 +149,9 @@ class NoneOfTestResult(MultiTestResult):
 
     def expected(self):
         return "NEITHER " + "\nNOR ".join(result.expected() for result in self._results)
+
+
+def invert(result: TestResult):
+    return BasicResult(result.failed,
+                       make_message("not {}", result.expected()),
+                       result.actual)

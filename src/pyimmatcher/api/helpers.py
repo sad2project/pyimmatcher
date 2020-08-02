@@ -1,16 +1,16 @@
 from typing import Type, Callable
 
 from pyimmatcher.api.results import make_message, BasicResult, TestResult
-from pyimmatcher.api.assertions import T, Assertion, InvertedAssertion
+from pyimmatcher.api.assertions import T, Assertion, NegatableAssertion
 
-__all__ = ['AsAssertion', 'ResultBuilder']
+__all__ = ['AsAssertion', 'ResultBuilder', 'not_']
 
 
 
 class AsAssertion(Assertion[T]):
     """
     `AsAssertion` is a decorator that turns a function that matches the
-    `Assertion.test()` method signature and turns it into a `Assertion`.
+    `NegatableAssertion.test()` method signature and turns it into a `NegatableAssertion`.
 
     This is only helpful with non-parameterized Tests, such as "is not none".
     """
@@ -95,7 +95,7 @@ class ResultBuilder:
         return BasicResult(False, self._expected, _actual)
 
 
-def not_(assertion: Assertion[T]) -> Assertion[T]:
-    return InvertedAssertion(assertion)
+def not_(assertion: NegatableAssertion[T]) -> NegatableAssertion[T]:
+    return assertion.__not__()
 
 

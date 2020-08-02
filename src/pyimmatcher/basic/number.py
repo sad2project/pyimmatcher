@@ -1,13 +1,13 @@
 from pyimmatcher.api.results import TestResult
 from pyimmatcher.api.helpers import ResultBuilder as Result
-from pyimmatcher.api.assertions import T, Assertion
+from pyimmatcher.api.assertions import T, NegatableAssertion
 
 from numbers import Real as Number
 from typing import _Final as Final
 from math import fabs
 
 
-class IsMultipleOf(Assertion[Number]):
+class IsMultipleOf(NegatableAssertion[Number]):
     def __init__(self, base: Number):
         self.base: Final = base
         self.result: Final = Result('is a multiple of {}', base)
@@ -22,7 +22,7 @@ class IsMultipleOf(Assertion[Number]):
         return IsNotMultipleOf(self.base)
 
 
-class IsNotMultipleOf(Assertion[Number]):
+class IsNotMultipleOf(NegatableAssertion[Number]):
     def __init__(self, base: Number):
         self.base: Final = base
         self.result: Final = Result('is not a multiple of {}', base)
@@ -34,7 +34,7 @@ class IsNotMultipleOf(Assertion[Number]):
             return self.result.fail('is a multiple of {}', self.base)
 
 
-class IsLessThan(Assertion[T]):
+class IsLessThan(NegatableAssertion[T]):
     def __init__(self, other: T):
         self.other: Final = other
         self.result: Final = Result('is less than {}', other)
@@ -46,7 +46,7 @@ class IsLessThan(Assertion[T]):
             return self.result.fail('is {}, which is greater or equal', actual)
 
 
-class IsLessThanOrEqualTo(Assertion[T]):
+class IsLessThanOrEqualTo(NegatableAssertion[T]):
     def __init__(self, other: T):
         self.other: Final = other
         self.result: Final = Result('is less than or equal to {}', other)
@@ -58,7 +58,7 @@ class IsLessThanOrEqualTo(Assertion[T]):
             return self.result.fail('is {}, which is greater', actual)
 
 
-class IsGreaterThan(Assertion[T]):
+class IsGreaterThan(NegatableAssertion[T]):
     def __init__(self, other: T):
         self.other: Final = other
         self.result: Final = Result('is greater than {}', other)
@@ -70,7 +70,7 @@ class IsGreaterThan(Assertion[T]):
             return self.result.fail('is {}, which is less or equal', actual)
 
 
-class IsGreaterThanOrEqualTo(Assertion[T]):
+class IsGreaterThanOrEqualTo(NegatableAssertion[T]):
     def __init__(self, other: T):
         self.other: Final = other
         self.result: Final = Result('is greater than or equal to {}', other)
@@ -82,7 +82,7 @@ class IsGreaterThanOrEqualTo(Assertion[T]):
             return self.result.fail('is {}, which is less', actual)
 
 
-class IsCloseTo(Assertion[float]):
+class IsCloseTo(NegatableAssertion[float]):
     def __init__(self, other: float, delta: float=0.00000001):
         self.other: Final = other
         self.delta: Final = delta
@@ -98,7 +98,7 @@ class IsCloseTo(Assertion[float]):
         return IsNotCloseTo(self.other, self.delta)
 
 
-class IsNotCloseTo(Assertion[float]):
+class IsNotCloseTo(NegatableAssertion[float]):
     def __init__(self, other: float, delta: float=0.00000001):
         self.other: Final = other
         self.delta: Final = delta
@@ -111,26 +111,26 @@ class IsNotCloseTo(Assertion[float]):
             return self.result.fail('is {}, within range', actual)
 
 
-def is_multiple_of(base: Number) -> Assertion[Number]:
+def is_multiple_of(base: Number) -> NegatableAssertion[Number]:
     return IsMultipleOf(base)
 
-def is_not_multiple_of(base: Number) -> Assertion[Number]:
+def is_not_multiple_of(base: Number) -> NegatableAssertion[Number]:
     return IsNotMultipleOf(base)
 
-def is_less_than(other: T) -> Assertion[T]:
+def is_less_than(other: T) -> NegatableAssertion[T]:
     return IsLessThan(other)
 
-def is_less_than_or_equal_to(other: T) -> Assertion[T]:
+def is_less_than_or_equal_to(other: T) -> NegatableAssertion[T]:
     return IsLessThanOrEqualTo(other)
 
-def is_greater_than(other: T) -> Assertion[T]:
+def is_greater_than(other: T) -> NegatableAssertion[T]:
     return IsGreaterThan(other)
 
-def is_greater_than_or_equal_to(other: T) -> Assertion[T]:
+def is_greater_than_or_equal_to(other: T) -> NegatableAssertion[T]:
     return IsGreaterThanOrEqualTo(other)
 
-def is_close_to(other: float, delta: float) -> Assertion[float]:
+def is_close_to(other: float, delta: float) -> NegatableAssertion[float]:
     return IsCloseTo(other, delta)
 
-def is_not_close_to(other: float, delta: float) -> Assertion[float]:
+def is_not_close_to(other: float, delta: float) -> NegatableAssertion[float]:
     return IsNotCloseTo(other, delta)

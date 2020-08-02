@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Collection, TypeVar, Type
 
-from pyimmatcher.api import AllOfTestResult, AnyOfTestResult, AllOfTestResult, AnyOfTestResult, \
-    Assertion, NoneOfTestResult
+from pyimmatcher.api import Assertion, AllOfTestResult, AnyOfTestResult, NoneOfTestResult
 
 __all__ = ['FailureMessageMaker', 'Tester', 'test_that']
 
@@ -74,8 +73,8 @@ class Tester:
                  msg: Optional[str]=None, *args, **kwargs):
         """
         Runs a matcher and creates the output for failed tests.
-        :param var_to_test: variable being tested by the `Assertion`
-        :param matcher: `Assertion` used to test the variable
+        :param var_to_test: variable being tested by the `NegatableAssertion`
+        :param matcher: `NegatableAssertion` used to test the variable
         :param msg: Override for the failure message. Can be written in a
         formattable string form and used with trailing arguments and keyword
         arguments to lazily create the full string only when the test fails.
@@ -98,8 +97,8 @@ class Tester:
         """
         Runs a series of matchers and creates the output for the tests if any
         failed.
-        :param var_to_test: variable being tested by the `Assertion`
-        :param matchers: Collection of `Assertion`s used to test the variable
+        :param var_to_test: variable being tested by the `NegatableAssertion`
+        :param matchers: Collection of `NegatableAssertion`s used to test the variable
         :param msg: Override for the failure message. Can be written in a
         formattable string form and used with trailing arguments and keyword
         arguments to lazily create the full string only when the test fails.
@@ -123,8 +122,8 @@ class Tester:
         """
         Runs a series of matchers and creates the output for the tests if they
         all failed.
-        :param var_to_test: variable being tested by the `Assertion`
-        :param matchers: Collection of `Assertion`s used to test the variable
+        :param var_to_test: variable being tested by the `NegatableAssertion`
+        :param matchers: Collection of `NegatableAssertion`s used to test the variable
         :param msg: Override for the failure message. Can be written in a
         formattable string form and used with trailing arguments and keyword
         arguments to lazily create the full string only when the test fails.
