@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic#, final
 
-from pyimmatcher.api import TestResult, AllOfTestResult, AnyOfTestResult, invert
+from pyimmatcher.api import TestResult, AllOfTestResult, AnyOfTestResult, negate
 
 T = TypeVar('T', contravariant=True)
 
@@ -26,9 +26,11 @@ class Assertion(ABC, Generic[T]):
         """
         pass
 
+    #@final
     def __and__(self, other):
         return AllOfAssertion(self, other)
 
+    #@final
     def __or__(self, other):
         return AnyOfAssertion(self, other)
 
@@ -36,9 +38,10 @@ class Assertion(ABC, Generic[T]):
 class NegatableAssertion(Assertion[T], ABC):
 
     def __not__(self):
-        return InvertedAssertion(self)
+        return DefaultNegatedAssertion(self)
 
 
+#@final
 class AllOfAssertion(Assertion[T]):
     def __init__(self, *assertions: Assertion[T]):
         self.assertions = list(assertions)
@@ -58,6 +61,7 @@ class AllOfAssertion(Assertion[T]):
         return AnyOfAssertion(self, other)
 
 
+#@final
 class AnyOfAssertion(Assertion[T]):
     def __init__(self, *assertions: Assertion[T]):
         self.assertions = list(assertions)
@@ -77,10 +81,10 @@ class AnyOfAssertion(Assertion[T]):
         return self
 
 
-class InvertedAssertion(Assertion[T]):
+class DefaultNegatedAssertion(Assertion[T]):
     def __init__(self, assertion: Assertion[T]):
         self.assertion = assertion
 
     def test(self, actual: T) -> TestResult:
         original_result = self.assertion.test(actual)
-        return invert(original_result)
+        return negate(original_result)

@@ -108,7 +108,7 @@ class AllOfTestResult(MultiTestResult):
 
     The 'actual' message only returns the 'actual' messages from the failed
     `TestResult`s in order to zero in on the problems. But (and I went back and
-    forth on this a lot) the 'expected' message *does* list off all of the
+    forth on this a lot) the 'expected' message *does* list off all the
     'expected' messages, not just the failed ones. This is to give the full
     context of what's being tested.
     """
@@ -151,7 +151,7 @@ class NoneOfTestResult(MultiTestResult):
         return "NEITHER " + "\nNOR ".join(result.expected() for result in self._results)
 
 
-def invert(result: TestResult):
+def negate(result: TestResult):
     return BasicResult(result.failed,
                        make_message("not {}", result.expected()),
                        result.actual)

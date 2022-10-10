@@ -10,7 +10,7 @@ __all__ = ['AsAssertion', 'ResultBuilder', 'not_']
 class AsAssertion(Assertion[T]):
     """
     `AsAssertion` is a decorator that turns a function that matches the
-    `NegatableAssertion.test()` method signature and turns it into a `NegatableAssertion`.
+    `Assertion.test()` method signature and turns it into a `Assertion`.
 
     This is only helpful with non-parameterized Tests, such as "is not none".
     """
