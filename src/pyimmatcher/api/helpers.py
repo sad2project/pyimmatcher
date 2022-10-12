@@ -1,10 +1,9 @@
 from typing import Type, Callable
 
 from pyimmatcher.api.results import make_message, BasicResult, TestResult
-from pyimmatcher.api.assertions import T, Assertion, NegatableAssertion
+from pyimmatcher.api.assertions import T, Assertion
 
 __all__ = ['AsAssertion', 'ResultBuilder', 'not_']
-
 
 
 class AsAssertion(Assertion[T]):
@@ -95,7 +94,7 @@ class ResultBuilder:
         return BasicResult(False, self._expected, _actual)
 
 
-def not_(assertion: NegatableAssertion[T]) -> NegatableAssertion[T]:
+def not_(assertion: Assertion[T]) -> Assertion[T]:
     return ~assertion
 
 

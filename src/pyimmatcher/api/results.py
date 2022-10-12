@@ -43,7 +43,7 @@ class TestResult(ABC):
     def failed(self):
         return not self.passed
 
-    def __not__(self) -> TestResult:
+    def __invert__(self) -> 'TestResult':
         return NegatedResult(self)
 
 
@@ -75,7 +75,7 @@ class NegatedResult(TestResult):
         if isinstance(original, NegatedResult):
             return original.original
         else:
-            return super().__new__(original, *args, **kwargs)
+            return super().__new__(original)
 
     @property
     def passed(self):
@@ -89,9 +89,8 @@ class NegatedResult(TestResult):
     def negated_message(self):
         return self.original.failure_message
 
-    def __not__(self):
+    def __invert__(self):
         return self.original
-
 
 
 def _make_simple_message(string: str) -> Message:
@@ -183,7 +182,7 @@ class AnyOfTestResult(MultiTestResult):
     def negated_message(self):
         return "Some assertions passed: \n" + super().negated_message()
 
-    def __not__(self) -> TestResult:
+    def __invert__(self) -> TestResult:
         return NoneOfTestResult(self._results)
 
 
@@ -201,7 +200,7 @@ class NoneOfTestResult(MultiTestResult):
     def negated_message(self):
         return "Every assertion failed: \n" + super().failure_message()
 
-    def __not__(self) -> TestResult:
+    def __invert__(self) -> TestResult:
         return AnyOfTestResult(self._results)
 
 

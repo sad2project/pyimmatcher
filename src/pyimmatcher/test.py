@@ -1,10 +1,11 @@
-from abc import ABC, abstractmethod
 from typing import Optional, Collection, TypeVar, Type
 from contextlib import contextmanager
 
-from pyimmatcher.api import Assertion, AllOfTestResult, AnyOfTestResult, NoneOfTestResult, make_message
+from pyimmatcher.api import (Assertion, AllOfTestResult, AnyOfTestResult, not_,
+    make_message, negate)
 
-__all__ = ['Tester', 'test_that']
+__all__ = ['Tester', 'test_that', 'not_']
+
 
 SUT = TypeVar('SUT', contravariant=True)
 
@@ -28,13 +29,13 @@ class Tester:
     """
 
     def __call__(self,
-                 var_to_test: Type[SUT],
+                 var_to_test: SUT,
                  matcher: Assertion[SUT],
                  msg: Optional[str]=None, *args, **kwargs):
         """
         Runs a matcher and creates the output for failed tests.
-        :param var_to_test: variable being tested by the `NegatableAssertion`
-        :param matcher: `NegatableAssertion` used to test the variable
+        :param var_to_test: variable being tested by the `Assertion`
+        :param matcher: `Assertion` used to test the variable
         :param msg: Override for the failure message. Can be written in a
         formattable string form and used with trailing arguments and keyword
         arguments to lazily create the full string only when the test fails.
@@ -48,17 +49,15 @@ class Tester:
         if result.failed:
             self._failure(var_to_test, result, msg, *args, **kwargs)
 
-
-
     def all(self,
-            var_to_test: Type[SUT],
+            var_to_test: SUT,
             matchers: Collection[Assertion[SUT]],
             msg: Optional[str]=None, *args, **kwargs):
         """
         Runs a series of matchers and creates the output for the tests if any
         failed.
-        :param var_to_test: variable being tested by the `NegatableAssertion`
-        :param matchers: Collection of `NegatableAssertion`s used to test the variable
+        :param var_to_test: variable being tested by the `Assertion`
+        :param matchers: Collection of `Assertion`s used to test the variable
         :param msg: Override for the failure message. Can be written in a
         formattable string form and used with trailing arguments and keyword
         arguments to lazily create the full string only when the test fails.
@@ -76,14 +75,14 @@ class Tester:
             self._failure(var_to_test, results, msg, *args, **kwargs)
 
     def any(self,
-            var_to_test: Type[SUT],
+            var_to_test: SUT,
             matchers: Collection[Assertion[SUT]],
             msg: Optional[str]=None, *args, **kwargs):
         """
         Runs a series of matchers and creates the output for the tests if they
         all failed.
-        :param var_to_test: variable being tested by the `NegatableAssertion`
-        :param matchers: Collection of `NegatableAssertion`s used to test the variable
+        :param var_to_test: variable being tested by the `Assertion`
+        :param matchers: Collection of `Assertion`s used to test the variable
         :param msg: Override for the failure message. Can be written in a
         formattable string form and used with trailing arguments and keyword
         arguments to lazily create the full string only when the test fails.
@@ -101,10 +100,9 @@ class Tester:
             self._failure(var_to_test, results, msg, *args, **kwargs)
 
     def none(self,
-                var_to_test: Type[SUT],
-                matchers: Collection[Assertion[SUT]],
-                msg: Optional[str] = None, *args, **kwargs
-                ):
+            var_to_test: SUT,
+            matchers: Collection[Assertion[SUT]],
+            msg: Optional[str] = None, *args, **kwargs):
         return negate(self.any(var_to_test, matchers, msg, *args, **kwargs))
 
     @contextmanager
@@ -113,7 +111,7 @@ class Tester:
         try:
             yield
             failed = True
-        except Exception as ex:
+        except Exception:
             pass
         finally:
             if failed:
@@ -131,10 +129,14 @@ class Tester:
                 failed = True
         finally:
             if failed:
-                err_msg = err_msg = make_message(msg or f"Code failed to raise an error of type '{err_type.__name__}'", *args, **kwargs)()
+                err_msg = make_message(
+                    msg or f"Code failed to raise an error of type '{err_type.__name__}'",
+                    *args,
+                    **kwargs)()
                 raise AssertionError(err_msg)
 
-    def _failure(self, var_to_test, result, msg, *args, **kwargs):
+    @staticmethod
+    def _failure(var_to_test, result, msg, *args, **kwargs):
         if msg:
             err_msg = msg.format(var_to_test, *args, **kwargs)
         else:

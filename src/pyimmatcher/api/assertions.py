@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic#, final
+from typing import TypeVar, Generic
 
 from pyimmatcher.api import TestResult, AllOfTestResult, AnyOfTestResult, negate
 
@@ -8,7 +8,7 @@ T = TypeVar('T', contravariant=True)
 
 class Assertion(ABC, Generic[T]):
     """
-        The main heart of this testing library, `NegatableAssertion`s are largely the same thing as
+        The main heart of this testing library, `Assertion`s are largely the same thing as
         `Matcher`s from Hamcrest, but designed to be more pure and functional. As
         such, they only have the one check method, and the message building
         functionality is delegated to the `TestResult` returned from the `test()`
@@ -26,22 +26,26 @@ class Assertion(ABC, Generic[T]):
         """
         pass
 
-    #@final
+    def and_(self, other):
+        return self.__and__(other)
+
+    def or_(self, other):
+        return self.__or__(other)
+
     def __and__(self, other):
         return AllOfAssertion(self, other)
 
-    #@final
     def __or__(self, other):
         return AnyOfAssertion(self, other)
 
-
-class NegatableAssertion(Assertion[T], ABC):
-
-    def __not__(self):
-        return DefaultNegatedAssertion(self)
+    def __invert__(self):
+        return SimpleNegatedAssertion(self)
 
 
-#@final
+def not_(assertion: Assertion[T]) -> Assertion[T]:
+    return ~assertion
+
+
 class AllOfAssertion(Assertion[T]):
     def __init__(self, *assertions: Assertion[T]):
         self.assertions = list(assertions)
@@ -61,7 +65,6 @@ class AllOfAssertion(Assertion[T]):
         return AnyOfAssertion(self, other)
 
 
-#@final
 class AnyOfAssertion(Assertion[T]):
     def __init__(self, *assertions: Assertion[T]):
         self.assertions = list(assertions)
@@ -81,10 +84,13 @@ class AnyOfAssertion(Assertion[T]):
         return self
 
 
-class DefaultNegatedAssertion(Assertion[T]):
+class SimpleNegatedAssertion(Assertion[T]):
     def __init__(self, assertion: Assertion[T]):
         self.assertion = assertion
 
     def test(self, actual: T) -> TestResult:
         original_result = self.assertion.test(actual)
         return negate(original_result)
+
+    def __invert__(self) -> Assertion[T]:
+        return self.assertion
