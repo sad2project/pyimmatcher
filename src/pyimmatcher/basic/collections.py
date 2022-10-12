@@ -3,6 +3,11 @@ from typing import TypeVar, Sequence, Generator, Iterable
 
 from pyimmatcher.api import TestResult, BasicResult as Result, Assertion, make_message, tabbed
 
+
+__all__ = ['contains', 'contains_all_in_order', 'does_not_contain',
+    'does_not_have_length', 'has_length', 'all_items_pass', 'not_all_items_pass']
+
+
 S = TypeVar('S', contravariant=True, bound=Sequence)
 E = TypeVar('E', covariant=True)
 
@@ -101,3 +106,43 @@ class AllPass(Assertion[Sequence[E]]):
 def some_items_failed(failed_items):
     failure_messages = map(TestResult.failure_message, failed_items)
     return lambda: 'Some items failed:\n' + tabbed('\n'.join(failure_messages))
+
+
+class HasLength(Assertion[Sequence]):
+    def __init__(self, expected_length):
+        self.expected_length = expected_length
+
+    def test(self, actual: Sequence) -> TestResult:
+        actual_length = len(actual)
+        return Result(
+            actual_length == self.expected_length,
+            make_message('length is {} instead of {}', actual_length, self.expected_length),
+            make_message('length is {}', actual_length))
+
+
+def contains(item: E) -> Assertion[Sequence[E]]:
+    return Contains(item)
+
+
+def does_not_contain(item: E) -> Assertion[Sequence[E]]:
+    return ~Contains(item)
+
+
+def contains_all_in_order(items: Sequence[E]) -> Assertion[Sequence[E]]:
+    return ContainsAllInOrder(items)
+
+
+def all_items_pass(assertion: Assertion[E]) -> Assertion[Sequence[E]]:
+    return AllPass(assertion)
+
+
+def not_all_items_pass(assertion: Assertion[E]) -> Assertion[Sequence[E]]:
+    return ~AllPass(assertion)
+
+
+def has_length(length: int) -> Assertion[Sequence]:
+    return HasLength(length)
+
+
+def does_not_have_length(length: int) -> Assertion[Sequence]:
+    return ~HasLength(length)
