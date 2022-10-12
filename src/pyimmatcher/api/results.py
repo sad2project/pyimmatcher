@@ -8,10 +8,11 @@ Message = Callable[[], str]
 class TestResult(ABC):
     """
     `TestResult` is a result from a test, obviously. They're created by the
-    `test()` method on `NegatableAssertion` (usually) and have serve two basic needs:
+    `test()` method on `Assertion` (usually) and have serve two basic needs:
 
-    1) Let the assertion function know whether or not the test failed
-    2) Provide the expected and actual messages for displaying how a test failed
+    1) Let the assertion function know whether the test failed
+    2) Provide the messages for displaying how a test failed (both normally or
+        negated)
 
     In the Hamcrest library, the `Matchers` provided all of this. Doing so
     required the object to be mutable if the 'actual result' message had any
@@ -21,12 +22,12 @@ class TestResult(ABC):
     mutating an argument rather than returning something.
 
     I like to lean towards purer functions and types, which allow you to reuse
-    the `NegatableAssertion` instances and make the result message code cleaner, I think.
+    the `Assertion` instances and make the result message code cleaner, I think.
 
     Something that is probably unexpected about `TestResult` is that the
     *expected* and *actual* messages are functions that return a string rather
     than just being a string in and of themselves. This is because, if the
-    `NegatableAssertion` wants to use a formatted string as part of the output, it's not
+    `Assertion` wants to use a formatted string as part of the output, it's not
     worth the effort of doing that formatting if the test doesn't fail and need
     the failure message.
 
@@ -35,12 +36,15 @@ class TestResult(ABC):
     that wants to output from a passing result because of an overall failure.
     """
     passed: bool
-    expected: Callable[[], str]
-    actual: Callable[[], str]
+    failure_message: Callable[[], str]
+    negated_message: Callable[[], str]
 
     @property
     def failed(self):
         return not self.passed
+
+    def __not__(self) -> TestResult:
+        return NegatedResult(self)
 
 
 class BasicResult(TestResult):
@@ -51,11 +55,43 @@ class BasicResult(TestResult):
     """
     def __init__(self,
             passed: bool,
-            expected: Message,
-            actual: Message):
+            failure_message: Message,
+            negated_message: Message):
         self.passed = passed
-        self.expected = expected
-        self.actual = actual
+        self.failure_message = failure_message
+        self.negated_message = negated_message
+
+
+class NegatedResult(TestResult):
+    def __init__(self, original: TestResult):
+        self.original: TestResult = original
+
+    def __new__(cls, original):
+        """
+        If the original Result that we're wrapping is already a NegatedResult, simply return that Result's wrapped
+        Result.
+        :param original: Result that we're wrapping
+        """
+        if isinstance(original, NegatedResult):
+            return original.original
+        else:
+            return super().__new__(original, *args, **kwargs)
+
+    @property
+    def passed(self):
+        return not self.original.passed
+
+    @property
+    def failure_message(self):
+        return self.original.negated_message
+
+    @property
+    def negated_message(self):
+        return self.original.failure_message
+
+    def __not__(self):
+        return self.original
+
 
 
 def _make_simple_message(string: str) -> Message:
@@ -97,8 +133,11 @@ class MultiTestResult(TestResult):
     def __init__(self, results: List[TestResult]):
         self._results = results
 
-    def actual(self):
-        return "\nAND ".join(result.actual() for result in self._results if result.failed)
+    def failure_message(self):
+        return "\nAND ".join(result.failure_message() for result in self._results if result.failed)
+
+    def negated_message(self):
+        return "\nAND ".join(result.negated_message() for result in self._results if result.passed)
 
 
 class AllOfTestResult(MultiTestResult):
@@ -119,8 +158,11 @@ class AllOfTestResult(MultiTestResult):
     def passed(self):
         return all(result.passed for result in self._results)
 
-    def expected(self):
-        return "\nAND ".join(result.expected() for result in self._results)
+    def failure_message(self):
+        return "Some assertions failed:\n" + super().failure_message()
+
+    def negated_message(self):
+        return "Every assertion passed when at least one was expected to fail"
 
 
 class AnyOfTestResult(MultiTestResult):
@@ -135,8 +177,14 @@ class AnyOfTestResult(MultiTestResult):
     def passed(self):
         return any(result.passed for result in self._results)
 
-    def expected(self):
-        return "\nOR ".join(result.expected() for result in self._results)
+    def failure_message(self):
+        return "Every assertion failed: \n" + super().failure_message()
+
+    def negated_message(self):
+        return "Some assertions passed: \n" + super().negated_message()
+
+    def __not__(self) -> TestResult:
+        return NoneOfTestResult(self._results)
 
 
 class NoneOfTestResult(MultiTestResult):
@@ -147,11 +195,15 @@ class NoneOfTestResult(MultiTestResult):
     def passed(self):
         return not any(result.passed for result in self._results)
 
-    def expected(self):
-        return "NEITHER " + "\nNOR ".join(result.expected() for result in self._results)
+    def failure_message(self):
+        return "Some assertions passed:\n" + super().negated_message()
+
+    def negated_message(self):
+        return "Every assertion failed: \n" + super().failure_message()
+
+    def __not__(self) -> TestResult:
+        return AnyOfTestResult(self._results)
 
 
 def negate(result: TestResult):
-    return BasicResult(result.failed,
-                       make_message("not {}", result.expected()),
-                       result.actual)
+    return NegatedResult(result)

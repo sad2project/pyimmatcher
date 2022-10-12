@@ -96,6 +96,6 @@ class ResultBuilder:
 
 
 def not_(assertion: NegatableAssertion[T]) -> NegatableAssertion[T]:
-    return assertion.__not__()
+    return ~assertion
 
 
