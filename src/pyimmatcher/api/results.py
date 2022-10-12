@@ -1,6 +1,7 @@
 from abc import ABC
 from typing import Callable, List
 
+from pyimmatcher.api.helpers import tabbed
 
 Message = Callable[[], str]
 
@@ -45,6 +46,26 @@ class TestResult(ABC):
 
     def __invert__(self) -> 'TestResult':
         return NegatedResult(self)
+
+    def prefaced_with(self, msg: str, **kwargs) -> 'TestResult':
+        return PrefacedResult(self, msg, **kwargs)
+
+
+class PrefacedResult(TestResult):
+    def __init__(self, inner_result: TestResult, msg: str, **kwargs):
+        self.inner = inner_result
+        self.msg = msg
+        self.kwargs = kwargs
+
+    @property
+    def passed(self):
+        return self.inner.passed
+
+    def failure_message(self):
+        return self.msg.format(inner=tabbed(self.inner.failure_message()), **self.kwargs)
+
+    def negated_message(self):
+        return self.msg.format(inner=tabbed(self.inner.negated_message()), **self.kwargs)
 
 
 class BasicResult(TestResult):
@@ -158,7 +179,7 @@ class AllOfTestResult(MultiTestResult):
         return all(result.passed for result in self._results)
 
     def failure_message(self):
-        return "Some assertions failed:\n" + super().failure_message()
+        return "Some assertions failed:\n" + tabbed(super().failure_message())
 
     def negated_message(self):
         return "Every assertion passed when at least one was expected to fail"
@@ -177,10 +198,10 @@ class AnyOfTestResult(MultiTestResult):
         return any(result.passed for result in self._results)
 
     def failure_message(self):
-        return "Every assertion failed: \n" + super().failure_message()
+        return "Every assertion failed: \n" + tabbed(super().failure_message())
 
     def negated_message(self):
-        return "Some assertions passed: \n" + super().negated_message()
+        return "Some assertions passed: \n" + tabbed(super().negated_message())
 
     def __invert__(self) -> TestResult:
         return NoneOfTestResult(self._results)
@@ -195,10 +216,10 @@ class NoneOfTestResult(MultiTestResult):
         return not any(result.passed for result in self._results)
 
     def failure_message(self):
-        return "Some assertions passed:\n" + super().negated_message()
+        return "Some assertions passed:\n" + tabbed(super().negated_message())
 
     def negated_message(self):
-        return "Every assertion failed: \n" + super().failure_message()
+        return "Every assertion failed: \n" + tabbed(super().failure_message())
 
     def __invert__(self) -> TestResult:
         return AnyOfTestResult(self._results)

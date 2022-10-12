@@ -1,136 +1,115 @@
-from pyimmatcher.api.results import TestResult
-from pyimmatcher.api.helpers import ResultBuilder as Result
-from pyimmatcher.api.assertions import T, NegatableAssertion
-
 from numbers import Real as Number
-from typing import _Final as Final
 from math import fabs
 
+from pyimmatcher.api.results import TestResult, BasicResult as Result, make_message
+from pyimmatcher.api.assertions import T, Assertion
 
-class IsMultipleOf(NegatableAssertion[Number]):
+
+class IsMultipleOf(Assertion[Number]):
     def __init__(self, base: Number):
-        self.base: Final = base
-        self.result: Final = Result('is a multiple of {}', base)
+        self.base = base
 
     def test(self, actual: Number) -> TestResult:
-        if (actual % self.base) == 0:
-            return self.result.simple_pass()
-        else:
-            return self.result.fail('is not a multiple of {}', self.base)
-
-    def __not__(self):
-        return IsNotMultipleOf(self.base)
+        return Result(
+            (actual % self.base) == 0,
+            make_message('{} is not a multiple of {}', actual, self.base),
+            make_message('{} is a multiple of {}', actual, self.base))
 
 
-class IsNotMultipleOf(NegatableAssertion[Number]):
+class IsDivisibleBy(Assertion[Number]):
     def __init__(self, base: Number):
-        self.base: Final = base
-        self.result: Final = Result('is not a multiple of {}', base)
+        self.base = base
 
     def test(self, actual: Number) -> TestResult:
-        if (actual % self.base) != 0:
-            return self.result.simple_pass()
-        else:
-            return self.result.fail('is a multiple of {}', self.base)
+        return Result(
+            (actual % self.base) == 0,
+            make_message('{} is not divisible by {}', actual, self.base),
+            make_message('{} is divisible by {}', actual, self.base))
 
 
-class IsLessThan(NegatableAssertion[T]):
-    def __init__(self, other: T):
-        self.other: Final = other
-        self.result: Final = Result('is less than {}', other)
-
-    def test(self, actual: T) -> TestResult:
-        if actual < self.other:
-            return self.result.pass_('is {} which is less', actual)
-        else:
-            return self.result.fail('is {}, which is greater or equal', actual)
-
-
-class IsLessThanOrEqualTo(NegatableAssertion[T]):
-    def __init__(self, other: T):
-        self.other: Final = other
-        self.result: Final = Result('is less than or equal to {}', other)
+class IsLessThan(Assertion[T]):
+    def __init__(self, bound: T):
+        self.bound = bound
 
     def test(self, actual: T) -> TestResult:
-        if actual <= self.other:
-            return self.result.pass_('is {}, which is less or equal', actual)
-        else:
-            return self.result.fail('is {}, which is greater', actual)
+        return Result(
+            actual < self.bound,
+            make_message('{} is not less than {}', actual, self.bound),
+            make_message('{} is less than {}', actual, self.bound))
 
 
-class IsGreaterThan(NegatableAssertion[T]):
-    def __init__(self, other: T):
-        self.other: Final = other
-        self.result: Final = Result('is greater than {}', other)
-
-    def test(self, actual: T) -> TestResult:
-        if actual > self.other:
-            return self.result.pass_('is {}, which is greater', actual)
-        else:
-            return self.result.fail('is {}, which is less or equal', actual)
-
-
-class IsGreaterThanOrEqualTo(NegatableAssertion[T]):
-    def __init__(self, other: T):
-        self.other: Final = other
-        self.result: Final = Result('is greater than or equal to {}', other)
+class IsLessThanOrEqualTo(Assertion[T]):
+    def __init__(self, bound: T):
+        self.bound = bound
 
     def test(self, actual: T) -> TestResult:
-        if actual >= self.other:
-            return self.result.pass_('is {}, which is greater or equal', actual)
-        else:
-            return self.result.fail('is {}, which is less', actual)
+        return Result(
+            actual <= self.bound,
+            make_message('{} is not less than or equal to {}', actual, self.bound),
+            make_message('{} is less than or equal to {}', actual, self.bound))
 
 
-class IsCloseTo(NegatableAssertion[float]):
-    def __init__(self, other: float, delta: float=0.00000001):
-        self.other: Final = other
-        self.delta: Final = delta
-        self.result: Final = Result('is within {delta} of {num}', delta=delta, num=other)
+class IsGreaterThan(Assertion[T]):
+    def __init__(self, bound: T):
+        self.bound = bound
+
+    def test(self, actual: T) -> TestResult:
+        return Result(
+            actual > self.bound,
+            make_message('{} is not greater than {}', actual, self.bound),
+            make_message('{} is greater than {}', actual, self.bound))
+
+
+class IsGreaterThanOrEqualTo(Assertion[T]):
+    def __init__(self, bound: T):
+        self.bound = bound
+
+    def test(self, actual: T) -> TestResult:
+        return Result(
+            actual >= self.bound,
+            make_message('{} is not greater than or equal to {}', actual, self.bound),
+            make_message('{} is greater than or equal to {}', actual, self.bound))
+
+
+class IsCloseTo(Assertion[float]):
+    def __init__(self, other: float, *, delta: float=0.00000001):
+        self.other = other
+        self.delta = delta
 
     def test(self, actual: float) -> TestResult:
-        if fabs(actual - self.other) <= self.delta:
-            return self.result.pass_('is {}, within range', actual)
-        else:
-            return self.result.fail('is {}, outside of range', actual)
-
-    def __not__(self):
-        return IsNotCloseTo(self.other, self.delta)
+        return Result(
+            fabs(actual - self.other) <= self.delta,
+            make_message('{} is not within {} ± {}', actual, self.other, self.delta),
+            make_message('{} is within {} ± {}', actual, self.other, self.delta))
 
 
-class IsNotCloseTo(NegatableAssertion[float]):
-    def __init__(self, other: float, delta: float=0.00000001):
-        self.other: Final = other
-        self.delta: Final = delta
-        self.result: Final = Result('is not within {delta} of {num}', delta=delta, num=other)
-
-    def test(self, actual: float) -> TestResult:
-        if fabs(actual - self.other) > self.delta:
-            return self.result.pass_('is {}, outside of range', actual)
-        else:
-            return self.result.fail('is {}, within range', actual)
-
-
-def is_multiple_of(base: Number) -> NegatableAssertion[Number]:
+def is_multiple_of(base: Number) -> Assertion[Number]:
     return IsMultipleOf(base)
 
-def is_not_multiple_of(base: Number) -> NegatableAssertion[Number]:
-    return IsNotMultipleOf(base)
 
-def is_less_than(other: T) -> NegatableAssertion[T]:
-    return IsLessThan(other)
+def is_not_multiple_of(base: Number) -> Assertion[Number]:
+    return ~IsMultipleOf(base)
 
-def is_less_than_or_equal_to(other: T) -> NegatableAssertion[T]:
-    return IsLessThanOrEqualTo(other)
 
-def is_greater_than(other: T) -> NegatableAssertion[T]:
-    return IsGreaterThan(other)
+def is_less_than(bound: T) -> Assertion[T]:
+    return IsLessThan(bound)
 
-def is_greater_than_or_equal_to(other: T) -> NegatableAssertion[T]:
-    return IsGreaterThanOrEqualTo(other)
 
-def is_close_to(other: float, delta: float) -> NegatableAssertion[float]:
-    return IsCloseTo(other, delta)
+def is_less_than_or_equal_to(bound: T) -> Assertion[T]:
+    return IsLessThanOrEqualTo(bound)
 
-def is_not_close_to(other: float, delta: float) -> NegatableAssertion[float]:
-    return IsNotCloseTo(other, delta)
+
+def is_greater_than(bound: T) -> Assertion[T]:
+    return IsGreaterThan(bound)
+
+
+def is_greater_than_or_equal_to(bound: T) -> Assertion[T]:
+    return IsGreaterThanOrEqualTo(bound)
+
+
+def is_close_to(other: float, *, delta: float=0.00000001) -> Assertion[float]:
+    return IsCloseTo(other, delta=delta)
+
+
+def is_not_close_to(other: float, *, delta: float=0.00000001) -> Assertion[float]:
+    return ~IsCloseTo(other, delta=delta)

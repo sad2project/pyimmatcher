@@ -1,68 +1,40 @@
 from itertools import tee
-from typing import _Final as Final, TypeVar, Sequence, Generator, Iterable
+from typing import TypeVar, Sequence, Generator, Iterable
 
-from pyimmatcher.api import NegatableAssertion, TestResult, ResultBuilder as Result, Assertion
+from pyimmatcher.api import TestResult, BasicResult as Result, Assertion, make_message
+from pyimmatcher.api.helpers import tabbed
 
 S = TypeVar('S', contravariant=True, bound=Sequence)
 E = TypeVar('E', covariant=True)
 
 
-class Contains(NegatableAssertion[Sequence[E]]):
+class Contains(Assertion[Sequence[E]]):
     def __init__(self, inner: E):
-        self.inner: Final = inner
-        self.result: Final = Result('contains {}', repr(inner))
+        self.inner = inner
 
     def test(self, actual: Sequence[E]) -> TestResult:
-        if self.inner in actual:
-            return self.result.pass_('', actual)
-        else:
-            return self.result.fail('does not contain {}', repr(self.inner))
-
-    def __not__(self):
-        return DoesNotContain(self.inner)
+        return Result(
+            self.inner in actual,
+            make_message('{0} does not contain {1}', actual, self.inner),
+            make_message('{0} contains {1}', actual, self.inner))
 
 
-class DoesNotContain(Assertion[Sequence[E]]):
-    def __init__(self, inner):
-        self.inner: Final = inner
-        self.result: Final = Result('does not contain {}', repr(inner))
-
-    def test(self, actual: Sequence[E]) -> TestResult:
-        if self.inner not in actual:
-            return self.result.simple_pass()
-        else:
-            return self.result.fail('contains {}', repr(self.inner))
-
-
-class ContainsAllInOrder(NegatableAssertion[Sequence[E]]):
+class ContainsAllInOrder(Assertion[Sequence[E]]):
     def __init__(self, first: E, *inner_seq: E):
-        self.first: Final = first
-        self.inner_seq: Final = (first, *inner_seq)
-        self.result: Final = Result(
-            'contains all of the following elements in order: {}', inner_seq)
+        self.first = first
+        self.inner_seq = (first, *inner_seq)
 
     def test(self, actual: Sequence[E]) -> TestResult:
-        if _contains_all_in_order(actual, self.first, self.inner_seq):
-            return self.result.simple_pass()
-        else:
-            return self.result.fail('does not contain the elements in the correct order')
-
-    def __not__(self):
-        return DoesNotContainAllInOrder(self.inner_seq)
-
-
-class DoesNotContainAllInOrder(Assertion[Sequence[E]]):
-    def __init__(self, first: E, *inner_seq: E):
-        self.first: Final = first
-        self.inner_seq: Final = (first, *inner_seq)
-        self.result: Final = Result(
-            'does not contain all of the following elements in order: {}', inner_seq)
-
-    def test(self, actual: Sequence[E]) -> TestResult:
-        if not _contains_all_in_order(actual, self.first, self.inner_seq):
-            return self.result.simple_pass()
-        else:
-            return self.result.fail('contains the elements in order')
+        return Result(
+            _contains_all_in_order(actual, self.first, self.inner_seq),
+            make_message(
+                '{0} does not contain, in order, {1}',
+                actual,
+                (self.first, *self.inner_seq)),
+            make_message(
+                '{0} does not contain, in order, {1}',
+                actual,
+                (self.first, *self.inner_seq)))
 
 
 def _contains_all_in_order(actual: Sequence, first, inner_seq):
@@ -111,3 +83,22 @@ def starts_with(super_seq: Iterable[E], sub_seq: Iterable[E]):
         if super_el != sub_el:
             return False
     return True
+
+
+class AllPass(Assertion[Sequence[E]]):
+    def __init__(self, assertion: Assertion[E]):
+        self.check_item = assertion
+
+    def test(self, test_seq: Sequence[E]) -> TestResult:
+        item_results = map(self.check_item.test, test_seq)
+        failed_items = list(filter(lambda res: res.failed, item_results))
+
+        return Result(
+            len(failed_items) == 0,
+            some_items_failed(failed_items),
+            make_message('All items passed'))
+
+
+def some_items_failed(failed_items):
+    failure_messages = map(TestResult.failure_message, failed_items)
+    return lambda: 'Some items failed:\n' + tabbed('\n'.join(failure_messages))

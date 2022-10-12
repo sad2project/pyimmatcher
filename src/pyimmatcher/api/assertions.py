@@ -89,8 +89,7 @@ class SimpleNegatedAssertion(Assertion[T]):
         self.assertion = assertion
 
     def test(self, actual: T) -> TestResult:
-        original_result = self.assertion.test(actual)
-        return negate(original_result)
+        return negate(self.assertion.test(actual))
 
     def __invert__(self) -> Assertion[T]:
         return self.assertion
