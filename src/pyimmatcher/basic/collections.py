@@ -1,8 +1,7 @@
 from itertools import tee
 from typing import TypeVar, Sequence, Generator, Iterable
 
-from pyimmatcher.api import TestResult, BasicResult as Result, Assertion, make_message
-from pyimmatcher.api.helpers import tabbed
+from pyimmatcher.api import TestResult, BasicResult as Result, Assertion, make_message, tabbed
 
 S = TypeVar('S', contravariant=True, bound=Sequence)
 E = TypeVar('E', covariant=True)

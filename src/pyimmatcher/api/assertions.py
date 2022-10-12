@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Callable, Type
 
 from pyimmatcher.api import TestResult, AllOfTestResult, AnyOfTestResult, negate
 
@@ -93,3 +93,20 @@ class SimpleNegatedAssertion(Assertion[T]):
 
     def __invert__(self) -> Assertion[T]:
         return self.assertion
+
+
+class AsAssertion(Assertion[T]):
+    """
+    `AsAssertion` is a decorator that turns a function that matches the
+    `Assertion.test()` method signature and turns it into a `Assertion`.
+
+    This is only helpful with non-parameterized Tests, such as "is not none".
+    """
+    def __init__(self, matcher_func: Callable[[T], TestResult]):
+        self.func = matcher_func
+
+    def __call__(self):
+        return self
+
+    def test(self, actual: Type[T]) -> TestResult:
+        return self.func(actual)

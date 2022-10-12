@@ -1,8 +1,6 @@
 from abc import ABC
 from typing import Callable, List
 
-from pyimmatcher.api.helpers import tabbed
-
 Message = Callable[[], str]
 
 
@@ -227,3 +225,7 @@ class NoneOfTestResult(MultiTestResult):
 
 def negate(result: TestResult):
     return NegatedResult(result)
+
+
+def tabbed(not_tabbed: str):
+    return '\t' + not_tabbed.replace('\n', '\n\t')
