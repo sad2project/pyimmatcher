@@ -49,23 +49,6 @@ class TestResult(ABC):
         return PrefacedResult(self, msg, **kwargs)
 
 
-class PrefacedResult(TestResult):
-    def __init__(self, inner_result: TestResult, msg: str, **kwargs):
-        self.inner = inner_result
-        self.msg = msg
-        self.kwargs = kwargs
-
-    @property
-    def passed(self):
-        return self.inner.passed
-
-    def failure_message(self):
-        return self.msg.format(inner=tabbed(self.inner.failure_message()), **self.kwargs)
-
-    def negated_message(self):
-        return self.msg.format(inner=tabbed(self.inner.negated_message()), **self.kwargs)
-
-
 class BasicResult(TestResult):
     """
     `BasicResult` is the basic, obvious implementation of `TestResult`. The best
@@ -85,17 +68,6 @@ class NegatedResult(TestResult):
     def __init__(self, original: TestResult):
         self.original: TestResult = original
 
-    def __new__(cls, original):
-        """
-        If the original Result that we're wrapping is already a NegatedResult, simply return that Result's wrapped
-        Result.
-        :param original: Result that we're wrapping
-        """
-        if isinstance(original, NegatedResult):
-            return original.original
-        else:
-            return super().__new__(original)
-
     @property
     def passed(self):
         return not self.original.passed
@@ -110,6 +82,23 @@ class NegatedResult(TestResult):
 
     def __invert__(self):
         return self.original
+
+
+class PrefacedResult(TestResult):
+    def __init__(self, inner_result: TestResult, msg: str, **kwargs):
+        self.inner = inner_result
+        self.msg = msg
+        self.kwargs = kwargs
+
+    @property
+    def passed(self):
+        return self.inner.passed
+
+    def failure_message(self):
+        return self.msg.format(inner=tabbed(self.inner.failure_message()), **self.kwargs)
+
+    def negated_message(self):
+        return self.msg.format(inner=tabbed(self.inner.negated_message()), **self.kwargs)
 
 
 def _make_simple_message(string: str) -> Message:
