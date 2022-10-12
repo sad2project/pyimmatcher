@@ -1,1 +1,1 @@
-To install, use ``pip install git+https://www.github.com/sad2projec/pyimmatcher.git#egg=pyimmatcher``
+To install, use ``pip install git+https://www.github.com/sad2project/pyimmatcher.git#egg=pyimmatcher``
