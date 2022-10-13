@@ -1,8 +1,8 @@
 from itertools import tee
 from typing import TypeVar, Sequence, Generator, Iterable
 
-from pyimmatcher.api import TestResult, BasicResult as Result, Assertion, make_message, tabbed
-
+from pyimmatcher.api import TestResult, BasicResult as Result, Assertion, make_message, AsAssertion, \
+    AllOfTestResult, AnyOfTestResult, NoneOfTestResult
 
 __all__ = ['contains', 'contains_all_in_order', 'does_not_contain',
     'does_not_have_length', 'has_length', 'all_items_pass', 'not_all_items_pass']
@@ -91,21 +91,26 @@ def starts_with(super_seq: Iterable[E], sub_seq: Iterable[E]):
 
 class AllPass(Assertion[Sequence[E]]):
     def __init__(self, assertion: Assertion[E]):
-        self.check_item = assertion
+        self.assertion = assertion
 
-    def test(self, test_seq: Sequence[E]) -> TestResult:
-        item_results = map(self.check_item.test, test_seq)
-        failed_items = list(filter(lambda res: res.failed, item_results))
-
-        return Result(
-            len(failed_items) == 0,
-            some_items_failed(failed_items),
-            make_message('All items passed'))
+    def test(self, actual: Sequence[E]) -> TestResult:
+        return AllOfTestResult([self.assertion.test(item) for item in actual])
 
 
-def some_items_failed(failed_items):
-    failure_messages = map(TestResult.failure_message, failed_items)
-    return lambda: 'Some items failed:\n' + tabbed('\n'.join(failure_messages))
+class AnyPass(Assertion[Sequence[E]]):
+    def __init__(self, assertion: Assertion[E]):
+        self.assertion = assertion
+
+    def test(self, actual: Sequence[E]) -> TestResult:
+        return AnyOfTestResult([self.assertion.test(item) for item in actual])
+
+
+class NonePass(Assertion[Sequence[E]]):
+    def __init__(self, assertion: Assertion[E]):
+        self.assertion = assertion
+
+    def test(self, actual: Sequence[E]) -> TestResult:
+        return NoneOfTestResult([self.assertion.test(item) for item in actual])
 
 
 class HasLength(Assertion[Sequence]):
@@ -118,6 +123,18 @@ class HasLength(Assertion[Sequence]):
             actual_length == self.expected_length,
             make_message('length is {} instead of {}', actual_length, self.expected_length),
             make_message('length is {}', actual_length))
+
+
+@AsAssertion
+def IsEmpty(actual):
+    return Result(
+        len(actual) == 0,
+        make_message('is not empty'),
+        make_message('is empty'))
+
+
+is_empty = IsEmpty()
+is_not_empty = ~is_empty
 
 
 def contains(item: E) -> Assertion[Sequence[E]]:

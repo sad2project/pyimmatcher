@@ -137,15 +137,27 @@ class Is(Assertion[T]):
 
 
 @AsAssertion
-def is_None(actual):
+def IsTrue(actual):
+    return Result(
+        actual,
+        make_message('is False'),
+        make_message('is True'))
+
+
+is_True = IsTrue()
+is_False = ~is_True()
+
+
+@AsAssertion
+def IsNone(actual):
     return Result(
         actual is None,
         make_message('{} is not None', actual),
         make_message('{} is None', actual))
 
 
-def is_not_None():
-    return ~is_None()
+is_None = IsNone()
+is_not_None = ~is_None()
 
 
 @AsAssertion
