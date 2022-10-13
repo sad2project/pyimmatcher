@@ -1,11 +1,9 @@
+from collections.abc import Collection
 from itertools import tee
 from typing import TypeVar, Sequence, Generator, Iterable
 
 from pyimmatcher.api import TestResult, BasicResult as Result, Assertion, make_message, AsAssertion, \
     AllOfTestResult, AnyOfTestResult, NoneOfTestResult
-
-__all__ = ['contains', 'contains_all_in_order', 'does_not_contain',
-    'does_not_have_length', 'has_length', 'all_items_pass', 'not_all_items_pass']
 
 
 S = TypeVar('S', contravariant=True, bound=Sequence)
@@ -45,9 +43,9 @@ def _contains_all_in_order(actual: Sequence, first, inner_seq):
     iterator = iter(actual)
     try:
         while True:
-            iterator = skip_until_element(iterator, first)
+            iterator = _skip_until_element(iterator, first)
             iterator, search_iter = tee(iterator, 2)
-            if starts_with(search_iter, inner_seq):
+            if _starts_with(search_iter, inner_seq):
                 return True
             # we have to cycle it forward, or else skip_until_element() will
             # just return the current iterator
@@ -56,7 +54,7 @@ def _contains_all_in_order(actual: Sequence, first, inner_seq):
         return False
 
 
-def skip_until_element(seq: Sequence[E], el: E) -> Generator[E, None, None]:
+def _skip_until_element(seq: Sequence[E], el: E) -> Generator[E, None, None]:
     try:
         iterator = iter(seq)
         current = next(iterator)
@@ -73,20 +71,20 @@ def skip_until_element(seq: Sequence[E], el: E) -> Generator[E, None, None]:
         return
 
 
-def starts_with(super_seq: Iterable[E], sub_seq: Iterable[E]):
-    if super_seq == iter(super_seq):
-        super_seq = tuple(super_seq)
-
-    if sub_seq == iter(sub_seq):
-        sub_seq = tuple(sub_seq)
+def _starts_with(super_seq: Iterable[E], sub_seq: Iterable[E]):
+    super_seq = _generate(super_seq)  # turn them into tuples if they're just iterators
+    sub_seq = _generate(sub_seq)
 
     if len(super_seq) < len(sub_seq):
         return False
 
-    for super_el, sub_el in zip(super_seq, sub_seq):
-        if super_el != sub_el:
-            return False
-    return True
+    return all(
+        super_el == sub_el
+        for super_el, sub_el in zip(super_seq, sub_seq))
+
+
+def _generate(seq: Iterable[E]) -> Collection[E]:
+    return tuple(seq) if seq == iter(seq) else seq
 
 
 class AllPass(Assertion[Sequence[E]]):
@@ -155,6 +153,14 @@ def all_items_pass(assertion: Assertion[E]) -> Assertion[Sequence[E]]:
 
 def not_all_items_pass(assertion: Assertion[E]) -> Assertion[Sequence[E]]:
     return ~AllPass(assertion)
+
+
+def any_items_pass(assertion: Assertion[E]) -> Assertion[Sequence[E]]:
+    return AnyPass(assertion)
+
+
+def no_items_pass(assertion: Assertion[E]) -> Assertion[Sequence[E]]:
+    return NonePass(assertion)
 
 
 def has_length(length: int) -> Assertion[Sequence]:
