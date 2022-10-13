@@ -87,6 +87,48 @@ def _generate(seq: Iterable[E]) -> Collection[E]:
     return tuple(seq) if seq == iter(seq) else seq
 
 
+class ContainsAll(Assertion[Sequence[E]]):
+    def __init__(self, other: Sequence[E]):
+        self.other = other
+
+    def test(self, actual: Sequence[E]) -> TestResult:
+        missing = list(_find_missing(self.other, actual))
+        return Result(
+            len(missing) == 0,
+            make_message("The following weren't found in the collection: {}", missing),
+            make_message("All items were found in the collection"))
+
+
+def _find_missing(other, actual):
+    for item in other:
+        if item not in actual:
+            yield item
+
+
+class ContainsExactly(Assertion[Sequence[E]]):
+    def __init__(self, other: Sequence[E]):
+        self.other = other
+
+    def test(self, actual: Sequence[E]) -> TestResult:
+        missing = list(_find_missing(self.other, actual))
+        extras = list(_find_missing(actual, self.other))
+        return Result(
+            len(missing) == 0 and len(extras) == 0,
+            make_message('items missing from the collection: {}\nextra items in the collection: {}', missing, extras),
+            make_message('both collections contain exactly the same items'))
+
+
+class ContainsExactlyInOrder(Assertion[Sequence[E]]):
+    def __init__(self, other: Sequence[E]):
+        self.other = other
+
+    def test(self, actual: Sequence[E]) -> TestResult:
+        return Result(
+            len(actual) == len(self.other) and all(a == b for a, b in zip(actual, self.other)),
+            make_message('{} and {} do not have the same items in the same order'),
+            make_message('both collections contain exactly the same items in the same order'))
+
+
 class AllPass(Assertion[Sequence[E]]):
     def __init__(self, assertion: Assertion[E]):
         self.assertion = assertion
@@ -145,6 +187,30 @@ def does_not_contain(item: E) -> Assertion[Sequence[E]]:
 
 def contains_all_in_order(items: Sequence[E]) -> Assertion[Sequence[E]]:
     return ContainsAllInOrder(items)
+
+
+def contains_exactly_in_order(other: Sequence[E]) -> Assertion[Sequence[E]]:
+    return ContainsExactlyInOrder(other)
+
+
+def does_not_contain_exactly_in_order(other: Sequence[E]) -> Assertion[Sequence[E]]:
+    return ~ContainsExactlyInOrder(other)
+
+
+def contains_exactly(other: Sequence[E]) -> Assertion[Sequence[E]]:
+    return ContainsExactly(other)
+
+
+def does_not_contain_exactly(other: Sequence[E]) -> Assertion[Sequence[E]]:
+    return ~ContainsExactly(other)
+
+
+def contains_all(other: Sequence[E]) -> Assertion[Sequence[E]]:
+    return ContainsAll(other)
+
+
+def does_not_contain_all(other: Sequence[E]) -> Assertion[Sequence[E]]:
+    return ~ContainsAll(other)
 
 
 def all_items_pass(assertion: Assertion[E]) -> Assertion[Sequence[E]]:
