@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import Callable, List
+from textwrap import indent
 
 Message = Callable[[], str]
 
@@ -227,7 +228,7 @@ def _make_message(string: str, *args, **kwargs) -> Message:
 
 
 def tabbed(not_tabbed: str):
-	return '\t' + not_tabbed.replace('\n', '\n\t')
+	return indent(not_tabbed, '|  ')
 
 
 def _to_str(obj):
