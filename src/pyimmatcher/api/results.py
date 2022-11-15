@@ -49,6 +49,12 @@ class TestResult(ABC):
 	def prefaced_with(self, msg: str, **kwargs) -> 'TestResult':
 		return PrefacedResult(self, msg, **kwargs)
 
+	def tabbed(self) -> 'TestResult':
+		return BasicResult(
+			self.passed,
+			lambda: tabbed(self.failure_message()),
+			lambda: tabbed(self.negated_message()))
+
 
 class BasicResult(TestResult):
 	"""
@@ -227,11 +233,11 @@ def _make_message(string: str, *args, **kwargs) -> Message:
 	return message
 
 
-tab = '|  '
+tab = '.  '
 
 
 def tabbed(not_tabbed: str):
-	return indent(not_tabbed, '|  ', lambda _: True)
+	return indent(not_tabbed, tab, lambda _: True)
 
 
 def _to_str(obj):
