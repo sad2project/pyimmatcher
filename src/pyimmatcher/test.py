@@ -141,11 +141,11 @@ class Tester:
 
 
 def _build_message(var_to_test, result, msg, *args, **kwargs):
-    prefix = f'Failure when testing {_to_str(var_to_test)}:\n'
+    prefix = f'Failure when testing the following object:\n{_to_str(var_to_test)}:\n'
     if msg:
-        return prefix + tabbed(msg.format(var_to_test, *args, **kwargs))
+        return '\n' + tabbed(prefix + tabbed(msg.format(var_to_test, *args, **kwargs)))
     else:
-        return prefix + tabbed(result.failure_message())
+        return '\n' + tabbed(prefix + tabbed(result.failure_message()))
 
 
 test_that = Tester()
