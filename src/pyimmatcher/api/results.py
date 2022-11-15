@@ -227,8 +227,11 @@ def _make_message(string: str, *args, **kwargs) -> Message:
 	return message
 
 
+tab = '|  '
+
+
 def tabbed(not_tabbed: str):
-	return indent(not_tabbed, '|  ')
+	return indent(not_tabbed, '|  ', lambda _: True)
 
 
 def _to_str(obj):
