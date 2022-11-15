@@ -2,10 +2,11 @@ from typing import Optional, Collection, TypeVar, Type
 from contextlib import contextmanager
 
 from pyimmatcher.api import (Assertion, AllOfTestResult, AnyOfTestResult, not_,
-    make_message, negate)
+    make_message, negate, tabbed)
 
 __all__ = ['Tester', 'test_that', 'not_']
 
+from pyimmatcher.api.results import _to_str
 
 SUT = TypeVar('SUT', contravariant=True)
 
@@ -47,7 +48,8 @@ class Tester:
         """
         result = matcher.test(var_to_test)
         if result.failed:
-            self._failure(var_to_test, result, msg, *args, **kwargs)
+            err_msg = _build_message(var_to_test, result, msg, *args, **kwargs)
+            raise AssertionError(err_msg)
 
     def all(self,
             var_to_test: SUT,
@@ -72,7 +74,8 @@ class Tester:
         results = AllOfTestResult(
             [matcher.test(var_to_test) for matcher in matchers])
         if results.failed:
-            self._failure(var_to_test, results, msg, *args, **kwargs)
+            err_msg = _build_message(var_to_test, results, msg, *args, **kwargs)
+            raise AssertionError(err_msg)
 
     def any(self,
             var_to_test: SUT,
@@ -97,7 +100,8 @@ class Tester:
         results = AnyOfTestResult(
             [matcher.test(var_to_test) for matcher in matchers])
         if results.failed:
-            self._failure(var_to_test, results, msg, *args, **kwargs)
+            err_msg = _build_message(var_to_test, results, msg, *args, **kwargs)
+            raise AssertionError(err_msg)
 
     def none(self,
             var_to_test: SUT,
@@ -135,13 +139,13 @@ class Tester:
                     **kwargs)()
                 raise AssertionError(err_msg)
 
-    @staticmethod
-    def _failure(var_to_test, result, msg, *args, **kwargs):
-        if msg:
-            err_msg = msg.format(var_to_test, *args, **kwargs)
-        else:
-            err_msg = result.failure_message()
-        raise AssertionError(err_msg)
+
+def _build_message(var_to_test, result, msg, *args, **kwargs):
+    prefix = f'Failure when testing {_to_str(var_to_test)}:\n'
+    if msg:
+        return prefix + tabbed(msg.format(var_to_test, *args, **kwargs))
+    else:
+        return prefix + tabbed(result.failure_message())
 
 
 test_that = Tester()
