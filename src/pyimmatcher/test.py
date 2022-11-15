@@ -6,7 +6,7 @@ from pyimmatcher.api import (Assertion, AllOfTestResult, AnyOfTestResult, not_,
 
 __all__ = ['Tester', 'test_that', 'not_']
 
-from pyimmatcher.api.results import _to_str
+from pyimmatcher.api.results import _to_str, tab
 
 SUT = TypeVar('SUT', contravariant=True)
 
@@ -142,11 +142,11 @@ class Tester:
 
 def _build_message(var_to_test, result, msg, *args, **kwargs):
     prefix = f'Failure when testing the following object:\n{tabbed(_to_str(var_to_test))}'
-    divider = '\n------------------------------------------------------------'
+    divider = '\n' + tab + '--------------------------------------------------------------------------------\n'
     if msg:
-        return '\n' + tabbed(prefix + divider + msg.format(var_to_test, *args, **kwargs))
+        return '\n' + tabbed(prefix) + divider + tabbed(msg.format(var_to_test, *args, **kwargs))
     else:
-        return '\n' + tabbed(prefix + divider + result.failure_message())
+        return '\n' + tabbed(prefix) + divider + tabbed(result.failure_message())
 
 
 test_that = Tester()
