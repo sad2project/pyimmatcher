@@ -152,7 +152,7 @@ is_False = ~is_True()
 def IsNone(actual):
     return Result(
         actual is None,
-        make_message('{} value is not None', type(actual).__class__),
+        make_message('{} value is not None', type(actual).__name__),
         make_message('value is None'))
 
 
